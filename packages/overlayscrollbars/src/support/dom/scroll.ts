@@ -26,9 +26,8 @@ export const scrollElementTo = (
 };
 
 /**
- * Scroll the passed element to the passed position.
- * @param elm The element to be scrolled.
- * @param position The scroll position.
+ * Get the scroll position of the passed element.
+ * @param elm The element whose scroll position is to be obtained.
  */
 export const getElementScroll = (elm: HTMLElement): Readonly<XY> => ({
   x: elm.scrollLeft,
