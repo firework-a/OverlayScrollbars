@@ -115,7 +115,11 @@ export const createScrollbarsSetup = (
     if (removeAutoHide) {
       _scrollbarsAddRemoveClass(classNameScrollbarAutoHideHidden);
     } else {
-      const hide = bind(_scrollbarsAddRemoveClass, classNameScrollbarAutoHideHidden, true);
+      const hide = bind(
+        _scrollbarsAddRemoveClass,
+        classNameScrollbarAutoHideHidden,
+        autoHideIsLeave ? !mouseInHost : true
+      );
       if (instanceAutoHideDelay > 0 && !delayless) {
         auotHideTimeout(hide);
       } else {
@@ -133,9 +137,17 @@ export const createScrollbarsSetup = (
   };
   const onHostMouseEnter = (event: PointerEvent) => {
     if (isHoverablePointerType(event)) {
-      mouseInHost = autoHideIsLeave;
-      if (autoHideIsLeave) {
+      mouseInHost = true;
+      if (!setupsInstanceState._sleeping && autoHideIsLeave) {
         manageScrollbarsAutoHide(true);
+      }
+    }
+  };
+  const onHostMouseLeave = (event: PointerEvent) => {
+    if (isHoverablePointerType(event)) {
+      mouseInHost = false;
+      if (!setupsInstanceState._sleeping && autoHideIsLeave) {
+        manageScrollbarsAutoHide(false);
       }
     }
   };
@@ -150,20 +162,9 @@ export const createScrollbarsSetup = (
     cancelScrollAnimationFrame,
     () => instanceAutoHideSuspendScrollDestroyFn(),
 
-    addEventListener(_host, 'pointerover', skipEventIfSleeping(onHostMouseEnter), { _once: true }),
-    addEventListener(_host, 'pointerenter', skipEventIfSleeping(onHostMouseEnter)),
-    addEventListener(
-      _host,
-      'pointerleave',
-      skipEventIfSleeping((event: PointerEvent) => {
-        if (isHoverablePointerType(event)) {
-          mouseInHost = false;
-          if (autoHideIsLeave) {
-            manageScrollbarsAutoHide(false);
-          }
-        }
-      })
-    ),
+    addEventListener(_host, 'pointerover', onHostMouseEnter, { _once: true }),
+    addEventListener(_host, 'pointerenter', onHostMouseEnter),
+    addEventListener(_host, 'pointerleave', onHostMouseLeave),
     addEventListener(
       _host,
       'pointermove',
@@ -283,6 +284,7 @@ export const createScrollbarsSetup = (
         autoHideIsMove = autoHide === 'move';
         autoHideIsLeave = autoHide === 'leave';
         autoHideIsNever = autoHide === 'never';
+
         manageScrollbarsAutoHide(autoHideIsNever, true);
       }
 

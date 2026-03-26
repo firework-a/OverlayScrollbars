@@ -570,7 +570,7 @@ describe('overlayscrollbars', () => {
       expect(osInstance.update()).toBe(true);
     });
 
-    test('sleeping', () => {
+    test('sleep', () => {
       const osInstance = OverlayScrollbars(div, {});
       const updatedFn = vi.fn();
       osInstance.on('updated', updatedFn);
