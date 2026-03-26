@@ -23,22 +23,22 @@ export type SetupUpdateHints = Partial<Record<string, boolean>>;
 
 export type SetupUpdateInfo = {
   _checkOption: OptionsCheckFn<Options>;
-  _changedOptions: PartialOptions;
+  _changedOptions: DeepReadonly<PartialOptions>;
   _force: boolean;
 };
 
 export type Setup<
   U extends SetupUpdateInfo,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  S extends Readonly<Record<string, any>>,
+  S extends Record<string, any>,
   H extends SetupUpdateHints | void,
 > = [
   /** The create function which returns the `destroy` function. */
   _create: () => () => void,
   /** Function which updates the setup and returns the update result. */
-  _update: (updateInfo: U) => H,
+  _update: (updateInfo: DeepReadonly<U>) => H,
   /** Function which returns the current state. */
-  _state: S,
+  _state: DeepReadonly<S>,
 ];
 
 export interface SetupsUpdateInfo {
@@ -48,8 +48,13 @@ export interface SetupsUpdateInfo {
   _force?: boolean;
   /** Whether observers should take their records and thus update as well. */
   _takeRecords?: boolean;
-  /** Whether one or more scrollbars has been cloned. */
-  _cloneScrollbar?: boolean;
+}
+
+export interface SetupsInstanceState {
+  /** Whether the instance is sleeping. */
+  _sleeping: boolean;
+  /** Whether the instance is destroyed. */
+  _destroyed: boolean;
 }
 
 export interface SetupsUpdateHints {
@@ -58,6 +63,7 @@ export interface SetupsUpdateHints {
 }
 
 export interface SetupsState {
+  readonly _instanceState: DeepReadonly<SetupsInstanceState>;
   readonly _observersSetupState: DeepReadonly<ObserversSetupState>;
   readonly _structureSetupState: DeepReadonly<StructureSetupState>;
 }
@@ -69,20 +75,25 @@ export interface SetupsElements {
 
 export type Setups = [
   construct: () => () => void,
-  update: (updateInfo: SetupsUpdateInfo) => boolean,
-  getState: () => SetupsState,
-  elements: SetupsElements,
+  update: (updateInfo: DeepReadonly<SetupsUpdateInfo>) => boolean,
+  updateSleep: (sleeping: boolean) => void,
+  cloneScrollbar: () => void,
+  getState: () => DeepReadonly<SetupsState>,
+  elements: DeepReadonly<SetupsElements>,
   canceled: () => void,
 ];
 
 export const createSetups = (
   target: InitializationTarget,
   options: ReadonlyOptions,
-  isDestroyed: () => boolean,
   onUpdated: (updateInfo: SetupsUpdateInfo, updateHints: SetupsUpdateHints) => void,
   onScroll: (scrollEvent: Event) => void
 ): Setups => {
   let cacheAndOptionsInitialized = false;
+  const instanceState: SetupsInstanceState = {
+    _sleeping: false,
+    _destroyed: false,
+  };
   const getCurrentOption = createOptionCheck(options, {});
   const [
     structureSetupCreate,
@@ -103,6 +114,7 @@ export const createSetups = (
     createScrollbarsSetup(
       target,
       options,
+      instanceState,
       observersSetupState,
       structureSetupState,
       structureSetupElements,
@@ -114,18 +126,14 @@ export const createSetups = (
 
   const update = (
     updateInfo: SetupsUpdateInfo,
-    observerUpdateHints?: ObserversSetupUpdateHints
+    observerUpdateHints?: Readonly<ObserversSetupUpdateHints>
   ): boolean => {
-    if (isDestroyed()) {
+    const { _sleeping, _destroyed } = instanceState;
+    if (_destroyed || (_sleeping && cacheAndOptionsInitialized)) {
       return false;
     }
 
-    const {
-      _changedOptions: rawChangedOptions,
-      _force: rawForce,
-      _takeRecords,
-      _cloneScrollbar,
-    } = updateInfo;
+    const { _changedOptions: rawChangedOptions, _force: rawForce, _takeRecords } = updateInfo;
 
     const _changedOptions = rawChangedOptions || {};
     const _force = !!rawForce || !cacheAndOptionsInitialized;
@@ -134,11 +142,6 @@ export const createSetups = (
       _changedOptions,
       _force,
     };
-
-    if (_cloneScrollbar) {
-      scrollbarsSetupUpdate(baseUpdateInfoObj);
-      return false;
-    }
 
     const observersHints =
       observerUpdateHints ||
@@ -184,7 +187,14 @@ export const createSetups = (
       const { _originalScrollOffsetElement, _scrollOffsetElement, _removeScrollObscuringStyles } =
         structureSetupElements;
       const initialScroll = getElementScroll(_originalScrollOffsetElement);
-      const destroyFns = [observersSetupCreate(), structureSetupCreate(), scrollbarsSetupCreate()];
+      const destroyFns = [
+        observersSetupCreate(),
+        structureSetupCreate(),
+        scrollbarsSetupCreate(),
+        () => {
+          instanceState._destroyed = true;
+        },
+      ];
       const revertScrollObscuringStyles = _removeScrollObscuringStyles();
 
       scrollElementTo(_scrollOffsetElement, initialScroll);
@@ -193,7 +203,23 @@ export const createSetups = (
       return bind(runEachAndClear, destroyFns);
     },
     update,
+    (sleeping) => {
+      const oldSleeping = instanceState._sleeping;
+      instanceState._sleeping = sleeping;
+
+      if (!sleeping && oldSleeping !== sleeping) {
+        update({ _force: true, _takeRecords: true });
+      }
+    },
+    () => {
+      scrollbarsSetupUpdate({
+        _checkOption: createOptionCheck(options, {}, false),
+        _changedOptions: {},
+        _force: false,
+      });
+    },
     () => ({
+      _instanceState: instanceState,
       _observersSetupState: observersSetupState,
       _structureSetupState: structureSetupState,
     }),

@@ -505,7 +505,6 @@ describe('overlayscrollbars', () => {
         padding: { t: 0, r: 0, b: 0, l: 0 },
         paddingAbsolute: false,
         directionRTL: false,
-        destroyed: false,
         scrollCoordinates: {
           start: {
             x: 0,
@@ -516,6 +515,8 @@ describe('overlayscrollbars', () => {
             y: 0,
           },
         },
+        sleeping: false,
+        destroyed: false,
       };
 
       expect(state).not.toBe(osInstance.state());
@@ -526,6 +527,27 @@ describe('overlayscrollbars', () => {
       expect(osInstance.state()).toEqual(
         expect.objectContaining({
           paddingAbsolute: true,
+        })
+      );
+
+      expect(osInstance.sleep(true)).not.toBeDefined();
+      expect(osInstance.state()).toEqual(
+        expect.objectContaining({
+          sleeping: true,
+        })
+      );
+
+      expect(osInstance.sleep(true)).not.toBeDefined();
+      expect(osInstance.state()).toEqual(
+        expect.objectContaining({
+          sleeping: true,
+        })
+      );
+
+      expect(osInstance.sleep(false)).not.toBeDefined();
+      expect(osInstance.state()).toEqual(
+        expect.objectContaining({
+          sleeping: false,
         })
       );
 
@@ -546,6 +568,31 @@ describe('overlayscrollbars', () => {
       // host mutation
       div.style.cursor = 'pointer';
       expect(osInstance.update()).toBe(true);
+    });
+
+    test('sleeping', () => {
+      const osInstance = OverlayScrollbars(div, {});
+      const updatedFn = vi.fn();
+      osInstance.on('updated', updatedFn);
+      osInstance.sleep(true);
+
+      expect(osInstance.update()).toBe(false);
+      expect(osInstance.update(false)).toBe(false);
+      expect(osInstance.update(true)).toBe(false);
+
+      // host mutation
+      div.style.cursor = 'pointer';
+      expect(osInstance.update()).toBe(false);
+
+      expect(updatedFn).not.toHaveBeenCalled();
+      osInstance.sleep(false);
+      expect(updatedFn).toHaveBeenCalledTimes(1);
+      expect(updatedFn).toHaveBeenLastCalledWith(
+        osInstance,
+        expect.objectContaining({
+          force: true,
+        })
+      );
     });
 
     describe('environment resize listener', () => {

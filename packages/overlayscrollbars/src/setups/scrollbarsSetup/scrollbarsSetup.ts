@@ -4,12 +4,13 @@ import type {
   ObserversSetupState,
   ObserversSetupUpdateHints,
   Setup,
+  SetupsInstanceState,
   SetupUpdateInfo,
   StructureSetupState,
   StructureSetupUpdateHints,
 } from '../../setups';
 import type { InitializationTarget } from '../../initialization';
-import type { OverflowStyle } from '../../typings';
+import type { DeepReadonly, OverflowStyle } from '../../typings';
 import type { StructureSetupElementsObj } from '../structureSetup/structureSetup.elements';
 import {
   classNameScrollbarThemeNone,
@@ -45,22 +46,23 @@ import {
 export interface ScrollbarsSetupState {}
 
 export interface ScrollbarsSetupUpdateInfo extends SetupUpdateInfo {
-  _observersUpdateHints?: ObserversSetupUpdateHints;
-  _structureUpdateHints?: StructureSetupUpdateHints;
+  _observersUpdateHints?: DeepReadonly<ObserversSetupUpdateHints>;
+  _structureUpdateHints?: DeepReadonly<StructureSetupUpdateHints>;
 }
 
 export type ScrollbarsSetup = [
   ...Setup<ScrollbarsSetupUpdateInfo, ScrollbarsSetupState, void>,
   /** The elements created by the scrollbars setup. */
-  ScrollbarsSetupElementsObj,
+  DeepReadonly<ScrollbarsSetupElementsObj>,
 ];
 
 export const createScrollbarsSetup = (
   target: InitializationTarget,
   options: ReadonlyOptions,
-  observersSetupState: ObserversSetupState,
-  structureSetupState: StructureSetupState,
-  structureSetupElements: StructureSetupElementsObj,
+  setupsInstanceState: DeepReadonly<SetupsInstanceState>,
+  observersSetupState: DeepReadonly<ObserversSetupState>,
+  structureSetupState: DeepReadonly<StructureSetupState>,
+  structureSetupElements: DeepReadonly<StructureSetupElementsObj>,
   onScroll: (event: Event) => void
 ): ScrollbarsSetup => {
   let mouseInHost: boolean | undefined;
@@ -71,6 +73,13 @@ export const createScrollbarsSetup = (
   let instanceAutoHideSuspendScrollDestroyFn = noop;
   let instanceAutoHideDelay = 0;
   const hoverablePointerTypes = ['mouse', 'pen'];
+  const skipEventIfSleeping =
+    <T extends Event>(fn: (event: T) => void): ((event: T) => void) =>
+    (event: T) => {
+      if (!setupsInstanceState._sleeping) {
+        fn(event);
+      }
+    };
 
   // needed to not fire unnecessary operations for pointer events on ios safari which will cause side effects: https://github.com/KingSora/OverlayScrollbars/issues/560
   const isHoverablePointerType = (event: PointerEvent) =>
@@ -89,6 +98,7 @@ export const createScrollbarsSetup = (
       options,
       structureSetupElements,
       structureSetupState,
+      skipEventIfSleeping,
       (event) => isHoverablePointerType(event) && manageScrollbarsAutoHideInstantInteraction()
     )
   );
@@ -121,10 +131,6 @@ export const createScrollbarsSetup = (
       });
     }
   };
-  const manageAutoHideSuspension = (add: boolean) => {
-    _scrollbarsAddRemoveClass(classNameScrollbarAutoHide, add, true);
-    _scrollbarsAddRemoveClass(classNameScrollbarAutoHide, add, false);
-  };
   const onHostMouseEnter = (event: PointerEvent) => {
     if (isHoverablePointerType(event)) {
       mouseInHost = autoHideIsLeave;
@@ -133,6 +139,10 @@ export const createScrollbarsSetup = (
       }
     }
   };
+  const manageAutoHideSuspension = (add: boolean) => {
+    _scrollbarsAddRemoveClass(classNameScrollbarAutoHide, add, true);
+    _scrollbarsAddRemoveClass(classNameScrollbarAutoHide, add, false);
+  };
   const destroyFns: (() => void)[] = [
     clearAutoHideTimeout,
     clearAutoHideInstantInteractionTimeout,
@@ -140,31 +150,43 @@ export const createScrollbarsSetup = (
     cancelScrollAnimationFrame,
     () => instanceAutoHideSuspendScrollDestroyFn(),
 
-    addEventListener(_host, 'pointerover', onHostMouseEnter, { _once: true }),
-    addEventListener(_host, 'pointerenter', onHostMouseEnter),
-    addEventListener(_host, 'pointerleave', (event: PointerEvent) => {
-      if (isHoverablePointerType(event)) {
-        mouseInHost = false;
-        if (autoHideIsLeave) {
-          manageScrollbarsAutoHide(false);
+    addEventListener(_host, 'pointerover', skipEventIfSleeping(onHostMouseEnter), { _once: true }),
+    addEventListener(_host, 'pointerenter', skipEventIfSleeping(onHostMouseEnter)),
+    addEventListener(
+      _host,
+      'pointerleave',
+      skipEventIfSleeping((event: PointerEvent) => {
+        if (isHoverablePointerType(event)) {
+          mouseInHost = false;
+          if (autoHideIsLeave) {
+            manageScrollbarsAutoHide(false);
+          }
         }
-      }
-    }),
-    addEventListener(_host, 'pointermove', (event: PointerEvent) => {
-      if (isHoverablePointerType(event) && autoHideIsMove) {
-        manageScrollbarsAutoHideInstantInteraction();
-      }
-    }),
-    addEventListener(_scrollEventElement, 'scroll', (event) => {
-      requestScrollAnimationFrame(() => {
-        _refreshScrollbarsHandleOffset();
-        manageScrollbarsAutoHideInstantInteraction();
-      });
+      })
+    ),
+    addEventListener(
+      _host,
+      'pointermove',
+      skipEventIfSleeping((event: PointerEvent) => {
+        if (isHoverablePointerType(event) && autoHideIsMove) {
+          manageScrollbarsAutoHideInstantInteraction();
+        }
+      })
+    ),
+    addEventListener(
+      _scrollEventElement,
+      'scroll',
+      skipEventIfSleeping((event) => {
+        requestScrollAnimationFrame(() => {
+          _refreshScrollbarsHandleOffset();
+          manageScrollbarsAutoHideInstantInteraction();
+        });
 
-      onScroll(event);
+        onScroll(event);
 
-      _refreshScrollbarsScrollbarOffset();
-    }),
+        _refreshScrollbarsScrollbarOffset();
+      })
+    ),
   ];
   const scrollbarsHidingPlugin = getStaticPluginModuleInstance<typeof ScrollbarsHidingPlugin>(
     scrollbarsHidingPluginName
@@ -245,7 +267,7 @@ export const createScrollbarsSetup = (
               instanceAutoHideSuspendScrollDestroyFn = addEventListener(
                 _scrollEventElement,
                 strScroll,
-                bind(manageAutoHideSuspension, true),
+                skipEventIfSleeping(bind(manageAutoHideSuspension, true)),
                 {
                   _once: true,
                 }

@@ -173,6 +173,8 @@ export interface State {
   };
   /** Whether the direction is considered rtl. */
   directionRTL: boolean;
+  /** Whether the instance is sleeping. */
+  sleeping: boolean;
   /** Whether the instance is considered destroyed. */
   destroyed: boolean;
 }
@@ -305,6 +307,8 @@ export interface OverlayScrollbars {
   state(): State;
   /** Returns the elements of the instance. */
   elements(): Elements;
+  /** Puts the instance to sleep or wakes it up. */
+  sleep(sleeping: boolean): void;
   /** Destroys the instance and removes all added elements. */
   destroy(): void;
   /** Returns the instance of the passed plugin or `undefined` if no instance was found. */
@@ -321,7 +325,6 @@ export const OverlayScrollbars: OverlayScrollbarsStatic = (
   const instanceTarget = targetIsElement ? target : target.target;
   const potentialInstance = getInstance(instanceTarget);
   if (options && !potentialInstance) {
-    let destroyed = false;
     const destroyFns: (() => void)[] = [];
     const instancePluginModuleInstances: Record<string, PluginModuleInstance> = {};
     const validateOptions = (newOptions: PartialOptions) => {
@@ -346,62 +349,74 @@ export const OverlayScrollbars: OverlayScrollbarsStatic = (
       triggerInstanceEvent(name, args);
       triggerPluginEvent(name, args);
     };
-    const [setupsConstruct, setupsUpdate, setupsState, setupsElements, setupsCanceled] =
-      createSetups(
-        target,
-        currentOptions,
-        () => destroyed,
-        ({ _changedOptions, _force }, { _observersUpdateHints, _structureUpdateHints }) => {
-          const {
-            _sizeChanged,
-            _directionChanged,
-            _heightIntrinsicChanged,
-            _contentMutation,
-            _hostMutation,
-            _appear,
-          } = _observersUpdateHints;
+    const [
+      setupsConstruct,
+      setupsUpdate,
+      setupsUpdateSleep,
+      setupsCloneScrollbar,
+      setupsState,
+      setupsElements,
+      setupsCanceled,
+    ] = createSetups(
+      target,
+      currentOptions,
+      ({ _changedOptions, _force }, { _observersUpdateHints, _structureUpdateHints }) => {
+        const {
+          _sizeChanged,
+          _directionChanged,
+          _heightIntrinsicChanged,
+          _contentMutation,
+          _hostMutation,
+          _appear,
+        } = _observersUpdateHints;
 
-          const {
-            _overflowEdgeChanged,
-            _overflowAmountChanged,
-            _overflowStyleChanged,
-            _scrollCoordinatesChanged,
-          } = _structureUpdateHints;
+        const {
+          _overflowEdgeChanged,
+          _overflowAmountChanged,
+          _overflowStyleChanged,
+          _scrollCoordinatesChanged,
+        } = _structureUpdateHints;
 
-          triggerEvent('updated', [
-            instance,
-            {
-              updateHints: {
-                sizeChanged: !!_sizeChanged,
-                directionChanged: !!_directionChanged,
-                heightIntrinsicChanged: !!_heightIntrinsicChanged,
-                overflowEdgeChanged: !!_overflowEdgeChanged,
-                overflowAmountChanged: !!_overflowAmountChanged,
-                overflowStyleChanged: !!_overflowStyleChanged,
-                scrollCoordinatesChanged: !!_scrollCoordinatesChanged,
-                contentMutation: !!_contentMutation,
-                hostMutation: !!_hostMutation,
-                appear: !!_appear,
-              },
-              changedOptions: _changedOptions || {},
-              force: !!_force,
+        triggerEvent('updated', [
+          instance,
+          {
+            updateHints: {
+              sizeChanged: !!_sizeChanged,
+              directionChanged: !!_directionChanged,
+              heightIntrinsicChanged: !!_heightIntrinsicChanged,
+              overflowEdgeChanged: !!_overflowEdgeChanged,
+              overflowAmountChanged: !!_overflowAmountChanged,
+              overflowStyleChanged: !!_overflowStyleChanged,
+              scrollCoordinatesChanged: !!_scrollCoordinatesChanged,
+              contentMutation: !!_contentMutation,
+              hostMutation: !!_hostMutation,
+              appear: !!_appear,
             },
-          ]);
-        },
-
-        (scrollEvent) => triggerEvent('scroll', [instance, scrollEvent])
-      );
+            changedOptions: _changedOptions || {},
+            force: !!_force,
+          },
+        ]);
+      },
+      (scrollEvent) => triggerEvent('scroll', [instance, scrollEvent])
+    );
 
     const destroy = (canceled: boolean) => {
+      const { _instanceState } = setupsState();
+      const { _destroyed } = _instanceState;
+
+      if (_destroyed) {
+        return;
+      }
+
       removeInstance(instanceTarget);
       runEachAndClear(destroyFns);
 
-      destroyed = true;
-
       triggerEvent('destroyed', [instance, canceled]);
+
       removePluginEvents();
       removeInstanceEvents();
     };
+    const update = (_force?: boolean) => setupsUpdate({ _force, _takeRecords: true });
 
     const instance: OverlayScrollbars = {
       options(newOptions?: PartialOptions, pure?: boolean) {
@@ -425,7 +440,8 @@ export const OverlayScrollbars: OverlayScrollbarsStatic = (
         }
       },
       state() {
-        const { _observersSetupState, _structureSetupState } = setupsState();
+        const { _instanceState, _observersSetupState, _structureSetupState } = setupsState();
+        const { _destroyed, _sleeping } = _instanceState;
         const { _directionIsRTL } = _observersSetupState;
         const {
           _overflowEdge,
@@ -450,7 +466,8 @@ export const OverlayScrollbars: OverlayScrollbarsStatic = (
             padding: _padding,
             paddingAbsolute: _paddingAbsolute,
             directionRTL: _directionIsRTL,
-            destroyed,
+            sleeping: _sleeping,
+            destroyed: _destroyed,
           }
         );
       },
@@ -484,7 +501,7 @@ export const OverlayScrollbars: OverlayScrollbarsStatic = (
           return assignDeep({}, translatedStructure, {
             clone: () => {
               const result = translateScrollbarStructure(_clone());
-              setupsUpdate({ _cloneScrollbar: true });
+              setupsCloneScrollbar();
               return result;
             },
           });
@@ -504,8 +521,9 @@ export const OverlayScrollbars: OverlayScrollbarsStatic = (
           }
         );
       },
-      update: (_force?: boolean) => setupsUpdate({ _force, _takeRecords: true }),
+      update,
       destroy: bind(destroy, false),
+      sleep: setupsUpdateSleep,
       plugin: <P extends InstancePlugin>(plugin: P) =>
         instancePluginModuleInstances[keys(plugin)[0]] as
           | InferInstancePluginModuleInstance<P>

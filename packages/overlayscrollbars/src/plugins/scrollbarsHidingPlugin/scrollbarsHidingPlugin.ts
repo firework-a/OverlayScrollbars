@@ -3,7 +3,7 @@ import type { Options, OptionsCheckFn } from '../../options';
 import type { StructureSetupElementsObj } from '../../setups/structureSetup/structureSetup.elements';
 import type { Env } from '../../environment';
 import type { WH, XY } from '../../support';
-import type { OverflowStyle, StyleObject, StyleObjectKey } from '../../typings';
+import type { DeepReadonly, OverflowStyle, StyleObject, StyleObjectKey } from '../../typings';
 import type { StructureSetupState } from '../../setups/structureSetup';
 import type { StaticPlugin } from '../plugins';
 import {
@@ -36,9 +36,9 @@ export const ScrollbarsHidingPlugin = /* @__PURE__ */ (() => ({
   [scrollbarsHidingPluginName]: {
     static: () => ({
       _viewportArrangement: (
-        structureSetupElements: StructureSetupElementsObj,
-        structureSetupState: StructureSetupState,
-        observersSetupState: ObserversSetupState,
+        structureSetupElements: DeepReadonly<StructureSetupElementsObj>,
+        structureSetupState: DeepReadonly<StructureSetupState>,
+        observersSetupState: DeepReadonly<ObserversSetupState>,
         env: Env,
         checkOptions: OptionsCheckFn<Options>
       ) => {

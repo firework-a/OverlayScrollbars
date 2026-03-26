@@ -6,7 +6,7 @@ import type {
 } from '../../initialization';
 import type { StructureSetupElementsObj } from '../structureSetup/structureSetup.elements';
 import type { ScrollbarsSetupEvents } from './scrollbarsSetup.events';
-import type { StyleObject } from '../../typings';
+import type { DeepReadonly, StyleObject } from '../../typings';
 import type { StructureSetupState } from '../structureSetup';
 import { dynamicInitializationElement as generalDynamicInitializationElement } from '../../initialization';
 import { getEnvironment } from '../../environment';
@@ -81,8 +81,8 @@ type ScrollbarStyleFn = (
 
 export const createScrollbarsSetupElements = (
   target: InitializationTarget,
-  structureSetupElements: StructureSetupElementsObj,
-  structureSetupState: StructureSetupState,
+  structureSetupElements: DeepReadonly<StructureSetupElementsObj>,
+  structureSetupState: DeepReadonly<StructureSetupState>,
   scrollbarsSetupEvents: ScrollbarsSetupEvents
 ): ScrollbarsSetupElements => {
   const cssCustomPropViewportPercent = '--os-viewport-percent';

@@ -4,7 +4,7 @@ import type { SizeObserverCallbackParams } from '../../observers';
 import type { StructureSetupElementsObj } from '../structureSetup/structureSetup.elements';
 import type { Setup, SetupUpdateInfo, StructureSetupState } from '../../setups';
 import type { CacheValues, DebounceLeading, DebounceTiming, WH } from '../../support';
-import type { PlainObject } from '../../typings';
+import type { DeepReadonly, PlainObject } from '../../typings';
 import { defaultOptionsUpdateDebounceEnv, defaultOptionsUpdateDebounceEvent } from '../../options';
 import { getStaticPluginModuleInstance, scrollbarsHidingPluginName } from '../../plugins';
 import {
@@ -66,10 +66,10 @@ export type ObserversSetup = Setup<
 >;
 
 export const createObserversSetup = (
-  structureSetupElements: StructureSetupElementsObj,
-  structureSetupState: StructureSetupState,
+  structureSetupElements: DeepReadonly<StructureSetupElementsObj>,
+  structureSetupState: DeepReadonly<StructureSetupState>,
   getCurrentOption: OptionsCheckFn<Options>,
-  onObserversUpdated: (updateHints: ObserversSetupUpdateHints) => void
+  onObserversUpdated: (updateHints: DeepReadonly<ObserversSetupUpdateHints>) => void
 ): ObserversSetup => {
   // latest debounce options
   let debounceMutation: OptionsDebounceValue | undefined;

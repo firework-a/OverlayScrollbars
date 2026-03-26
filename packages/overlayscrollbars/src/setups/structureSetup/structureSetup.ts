@@ -7,7 +7,7 @@ import type {
   SetupUpdateInfo,
 } from '../../setups';
 import type { InitializationTarget } from '../../initialization';
-import type { StyleObject, OverflowStyle } from '../../typings';
+import type { StyleObject, OverflowStyle, DeepReadonly } from '../../typings';
 import {
   assignDeep,
   each,
@@ -43,8 +43,8 @@ export interface StructureSetupState {
 }
 
 export interface StructureSetupUpdateInfo extends SetupUpdateInfo {
-  _observersState: ObserversSetupState;
-  _observersUpdateHints?: ObserversSetupUpdateHints;
+  _observersState: DeepReadonly<ObserversSetupState>;
+  _observersUpdateHints?: DeepReadonly<ObserversSetupUpdateHints>;
 }
 
 export type StructureSetupUpdateHints = {
@@ -58,19 +58,19 @@ export type StructureSetupUpdateHints = {
 export type StructureSetup = [
   ...Setup<StructureSetupUpdateInfo, StructureSetupState, StructureSetupUpdateHints>,
   /** The elements created by the structure setup. */
-  StructureSetupElementsObj,
+  DeepReadonly<StructureSetupElementsObj>,
   /** Function to be called when the initialization was canceled. */
   () => void,
 ];
 
 export type StructureUpdateSegment = (
-  updateInfo: StructureSetupUpdateInfo,
-  updateHints: Readonly<StructureSetupUpdateHints>
+  updateInfo: DeepReadonly<StructureSetupUpdateInfo>,
+  updateHints: DeepReadonly<StructureSetupUpdateHints>
 ) => StructureSetupUpdateHints | void;
 
 export type CreateStructureUpdateSegment = (
-  structureSetupElements: StructureSetupElementsObj,
-  state: StructureSetupState
+  structureSetupElements: DeepReadonly<StructureSetupElementsObj>,
+  state: DeepReadonly<StructureSetupState>
 ) => StructureUpdateSegment;
 
 export const createStructureSetup = (target: InitializationTarget): StructureSetup => {
