@@ -5,7 +5,7 @@ import { OverlayScrollbars } from '~/overlayscrollbars';
 import { ScrollbarsHidingPlugin } from '~/plugins';
 import { setTestResult, timeout, waitForOrFailTest } from '@~local/browser-testing';
 import should from 'should';
-import { getStyles } from '~/support';
+import { getStyles, setStyles } from '~/support';
 
 if (!OverlayScrollbars.env().scrollbarsHiding) {
   OverlayScrollbars.plugin(ScrollbarsHidingPlugin);
@@ -224,14 +224,19 @@ const updateInstances = (force?: boolean) => {
   osInstanceB.update(force);
 };
 
+const getContentElement = (osInstance: OverlayScrollbars) =>
+  osInstance.elements().viewport.querySelector<HTMLDivElement>('.content');
+
 const checkInstanceState = (osInstance: OverlayScrollbars, before?: boolean) => {
   const { host } = osInstance.elements();
   const { scrollCoordinates, overflowAmount, hasOverflow } = osInstance.state();
   const { start, end } = scrollCoordinates;
   const beforeAfter = before ? 'before' : 'after';
   const hostId = host.id;
+  const contentElm = getContentElement(osInstance);
+  const contentVisible = getStyles(contentElm, 'display') !== 'none';
 
-  if (!before) {
+  if (!before && contentVisible) {
     should(overflowAmount.x).greaterThan(
       0,
       `Scroll AmountX must be greater than 0 ${beforeAfter} appear. (${hostId})`
@@ -356,31 +361,63 @@ const runHideWrapper = async () => {
   checkInstanceState(osInstanceD);
 
   await timeout(100);
+};
+
+const checkAutoHideSuspend = async () => {
+  if (!autoHideSuspend) {
+    return;
+  }
+
+  await runHideWrapper();
 
   const msg = 'AutoHideSuspend works correctly on appear.';
   await Promise.all([
-    assertScrollbarVisibility(osInstanceA, autoHideSuspend, msg),
-    assertScrollbarVisibility(osInstanceB, autoHideSuspend, msg),
-    assertScrollbarVisibility(osInstanceC, autoHideSuspend, msg),
+    assertScrollbarVisibility(osInstanceA, true, msg),
+    assertScrollbarVisibility(osInstanceB, true, msg),
+    assertScrollbarVisibility(osInstanceC, true, msg),
     assertScrollbarVisibility(osInstanceD, true, msg),
   ]);
 
   await timeout(100);
 
-  if (autoHideSuspend) {
-    const msg2 = 'AutoHideSuspend works correctly after interaction.';
-    [osInstanceA, osInstanceB, osInstanceC, osInstanceD].forEach((osInstance) => {
-      osInstance.elements().scrollOffsetElement.scrollLeft = 9999;
-      osInstance.elements().scrollOffsetElement.scrollTop = 9999;
-    });
+  const msg2 = 'AutoHideSuspend works correctly after interaction.';
+  [osInstanceA, osInstanceB, osInstanceC, osInstanceD].forEach((osInstance) => {
+    osInstance.elements().scrollOffsetElement.scrollLeft = 9999;
+    osInstance.elements().scrollOffsetElement.scrollTop = 9999;
+  });
 
-    await Promise.all([
-      assertScrollbarVisibility(osInstanceA, false, msg2),
-      assertScrollbarVisibility(osInstanceB, false, msg2),
-      assertScrollbarVisibility(osInstanceC, false, msg2),
-      assertScrollbarVisibility(osInstanceD, true, msg2),
-    ]);
-  }
+  await Promise.all([
+    assertScrollbarVisibility(osInstanceA, false, msg2),
+    assertScrollbarVisibility(osInstanceB, false, msg2),
+    assertScrollbarVisibility(osInstanceC, false, msg2),
+    assertScrollbarVisibility(osInstanceD, true, msg2),
+  ]);
+
+  await timeout(100);
+
+  [osInstanceA, osInstanceB, osInstanceC, osInstanceD].forEach((osInstance) => {
+    osInstance.elements().scrollOffsetElement.scrollLeft = 0;
+    osInstance.elements().scrollOffsetElement.scrollTop = 0;
+    setStyles(getContentElement(osInstance), {
+      display: 'none',
+    });
+  });
+
+  await runHideWrapper();
+
+  const msg3 = 'AutoHideSuspend works correctly without initial overflow.';
+  [osInstanceA, osInstanceB, osInstanceC, osInstanceD].forEach((osInstance) => {
+    setStyles(getContentElement(osInstance), {
+      display: '',
+    });
+  });
+
+  await Promise.all([
+    assertScrollbarVisibility(osInstanceA, false, msg3),
+    assertScrollbarVisibility(osInstanceB, false, msg3),
+    assertScrollbarVisibility(osInstanceC, false, msg3),
+    assertScrollbarVisibility(osInstanceD, true, msg3),
+  ]);
 };
 
 const runAppeared = async () => {
@@ -436,8 +473,8 @@ startBtn.addEventListener('click', async () => {
     should.equal(targetCScrollCount, 0, `TargetC scroll count should be 0. (end)`);
     should.equal(targetDScrollCount, 0, `TargetD scroll count should be 0. (end)`);
 
-    // does scrolling if `autoHideSuspend` is true
     await runHideWrapper();
+    await checkAutoHideSuspend();
 
     setTestResult(true);
   } catch (e: any) {

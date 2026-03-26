@@ -79,7 +79,7 @@ export const createScrollbarsSetup = (
   const [requestScrollAnimationFrame, cancelScrollAnimationFrame] = selfClearTimeout();
   const [autoHideInstantInteractionTimeout, clearAutoHideInstantInteractionTimeout] =
     selfClearTimeout(100);
-  const [autoHideSuspendTimeout, clearAutoHideSuspendTimeout] = selfClearTimeout(100);
+  const [autoHideSuspendTimeout, clearAutoHideSuspendTimeout] = selfClearTimeout(50);
   const [auotHideTimeout, clearAutoHideTimeout] = selfClearTimeout(() => instanceAutoHideDelay);
   const [elements, appendElements] = createScrollbarsSetupElements(
     target,
@@ -194,7 +194,6 @@ export const createScrollbarsSetup = (
       const [clickScroll, clickScrollChanged] = _checkOption('scrollbars.clickScroll');
       const [overflow, overflowChanged] = _checkOption('overflow');
       const trulyAppeared = _appear && !_force;
-      const hasOverflow = _hasOverflow.x || _hasOverflow.y;
       const updateScrollbars =
         _overflowEdgeChanged ||
         _overflowAmountChanged ||
@@ -225,25 +224,6 @@ export const createScrollbarsSetup = (
 
       instanceAutoHideDelay = autoHideDelay;
 
-      if (trulyAppeared) {
-        if (autoHideSuspend && hasOverflow) {
-          manageAutoHideSuspension(false);
-          instanceAutoHideSuspendScrollDestroyFn();
-          autoHideSuspendTimeout(() => {
-            instanceAutoHideSuspendScrollDestroyFn = addEventListener(
-              _scrollEventElement,
-              'scroll',
-              bind(manageAutoHideSuspension, true),
-              {
-                _once: true,
-              }
-            );
-          });
-        } else {
-          manageAutoHideSuspension(true);
-        }
-      }
-
       if (showNativeOverlaidScrollbarsChanged || cantHideScrollbars) {
         _scrollbarsAddRemoveClass(classNameScrollbarThemeNone, showNativeScrollbars);
       }
@@ -255,8 +235,26 @@ export const createScrollbarsSetup = (
         prevTheme = theme;
       }
 
-      if (autoHideSuspendChanged && !autoHideSuspend) {
-        manageAutoHideSuspension(true);
+      if (autoHideSuspendChanged || trulyAppeared) {
+        manageAutoHideSuspension(!autoHideSuspend);
+
+        if (trulyAppeared && autoHideSuspend) {
+          if (_hasOverflow.x || _hasOverflow.y) {
+            instanceAutoHideSuspendScrollDestroyFn();
+            autoHideSuspendTimeout(() => {
+              instanceAutoHideSuspendScrollDestroyFn = addEventListener(
+                _scrollEventElement,
+                strScroll,
+                bind(manageAutoHideSuspension, true),
+                {
+                  _once: true,
+                }
+              );
+            });
+          } else {
+            manageAutoHideSuspension(true);
+          }
+        }
       }
 
       if (autoHideChanged) {
