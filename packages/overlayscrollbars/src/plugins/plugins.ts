@@ -170,7 +170,21 @@ export const registerPluginModuleInstances = (
     }
   });
 
+export type GetInstancePluginModuleInstanceFn = <T extends InstancePlugin>(
+  pluginModuleName: T extends InstancePlugin<infer N> ? N : never
+) => InferInstancePluginModuleInstance<T> | undefined;
+
+export const getInstancePluginModuleInstance = <T extends InstancePlugin>(
+  instancePluginModuleInstances: Record<string, PluginModuleInstance | void>,
+  pluginModuleName: T extends InstancePlugin<infer N> ? N : never
+): InferInstancePluginModuleInstance<T> | undefined =>
+  instancePluginModuleInstances[pluginModuleName] as
+    | InferInstancePluginModuleInstance<T>
+    | undefined;
+
 export const getStaticPluginModuleInstance = <T extends StaticPlugin>(
   pluginModuleName: T extends StaticPlugin<infer N> ? N : never
 ): InferStaticPluginModuleInstance<T> | undefined =>
-  staticPluginModuleInstances[pluginModuleName] as InferStaticPluginModuleInstance<T> | undefined;
+  getInstancePluginModuleInstance(staticPluginModuleInstances, pluginModuleName) as
+    | InferStaticPluginModuleInstance<T>
+    | undefined;

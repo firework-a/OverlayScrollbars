@@ -44,9 +44,7 @@ export const animateNumber = (
       from;
     const animationCompleted = stopAnimation || percent === 1;
 
-    if (onFrame) {
-      onFrame(progress, percent, animationCompleted);
-    }
+    onFrame(progress, percent, animationCompleted);
 
     animationFrameId = animationCompleted ? 0 : rAF!(() => frame());
   };

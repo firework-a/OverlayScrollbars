@@ -360,6 +360,10 @@ export const OverlayScrollbars: OverlayScrollbarsStatic = (
     ] = createSetups(
       target,
       currentOptions,
+      /*
+      <T extends InstancePlugin>(pluginName: T extends InstancePlugin<infer N> ? N : never) =>
+        getInstancePluginModuleInstance(instancePluginModuleInstances, pluginName),
+      */
       ({ _changedOptions, _force }, { _observersUpdateHints, _structureUpdateHints }) => {
         const {
           _sizeChanged,

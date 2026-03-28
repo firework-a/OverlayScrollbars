@@ -1,9 +1,13 @@
 import type { XY } from '../../support';
-import type { ClickScrollPlugin } from '../../plugins';
 import type { ReadonlyOptions } from '../../options';
 import type { StructureSetupState } from '../../setups';
 import type { ScrollbarsSetupElementsObj, ScrollbarStructure } from './scrollbarsSetup.elements';
 import type { StructureSetupElementsObj } from '../structureSetup/structureSetup.elements';
+import {
+  ClickScrollPlugin,
+  clickScrollPluginModuleName,
+  getStaticPluginModuleInstance,
+} from '../../plugins';
 import {
   classNameScrollbarHandle,
   classNameScrollbarInteraction,
@@ -11,7 +15,6 @@ import {
   dataAttributeHost,
   dataAttributeViewport,
 } from '../../classnames';
-import { clickScrollPluginModuleName, getStaticPluginModuleInstance } from '../../plugins';
 import {
   getBoundingClientRect,
   getOffsetSize,
@@ -81,18 +84,6 @@ export const createScrollbarsSetupEvents = (
       const leftTopKey = isHorizontal ? 'left' : 'top';
       const whKey = isHorizontal ? 'w' : 'h';
       const xyKey = isHorizontal ? 'x' : 'y';
-
-      const createRelativeHandleMove =
-        (mouseDownScroll: number, invertedScale: number) => (deltaMovement: number) => {
-          const { _overflowAmount } = structureSetupState;
-          const handleTrackDiff = getOffsetSize(_track)[whKey] - getOffsetSize(_handle)[whKey];
-          const scrollDeltaPercent = (invertedScale * deltaMovement) / handleTrackDiff;
-          const scrollDelta = scrollDeltaPercent * _overflowAmount[xyKey];
-
-          scrollElementTo(_scrollOffsetElement, {
-            [xyKey]: mouseDownScroll + scrollDelta,
-          });
-        };
       const pointerdownCleanupFns: Array<() => void> = [];
 
       return addEventListener(
@@ -129,17 +120,27 @@ export const createScrollbarsSetupEvents = (
             const axisScale =
               mathRound(getBoundingClientRect(_scrollOffsetElement)[widthHeightKey]) /
                 getOffsetSize(_scrollOffsetElement)[whKey] || 1;
-            const moveHandleRelative = createRelativeHandleMove(
-              getElementScroll(_scrollOffsetElement)[xyKey],
-              1 / axisScale
-            );
-            const pointerDownOffset = pointerDownEvent[clientXYKey];
+            const mouseDownScroll = getElementScroll(_scrollOffsetElement)[xyKey];
+            const scrollRelative = (deltaScroll: number) => {
+              scrollElementTo(_scrollOffsetElement, {
+                [xyKey]: mouseDownScroll + deltaScroll,
+              });
+            };
+            const moveHandleRelative = (deltaMovement: number) => {
+              const { _overflowAmount } = structureSetupState;
+              const handleTrackDiff = getOffsetSize(_track)[whKey] - getOffsetSize(_handle)[whKey];
+              const scrollDeltaPercent = ((1 / axisScale) * deltaMovement) / handleTrackDiff;
+              scrollRelative(scrollDeltaPercent * _overflowAmount[xyKey]);
+            };
+            const pointerDownClientOffset = pointerDownEvent[clientXYKey];
             const handleRect = getHandleRect();
             const trackRect = getTrackRect();
             const handleLength = handleRect[widthHeightKey];
             const handleCenter = getHandleOffset(handleRect, trackRect) + handleLength / 2;
-            const relativeTrackPointerOffset = pointerDownOffset - trackRect[leftTopKey];
-            const startOffset = isDragScroll ? 0 : relativeTrackPointerOffset - handleCenter;
+            const relativeTrackPointerOffset = pointerDownClientOffset - trackRect[leftTopKey];
+            const clickScrollDeltaMovement = relativeTrackPointerOffset - handleCenter;
+            const dragScrollStartOffset = isDragScroll ? 0 : clickScrollDeltaMovement; // `clickScrollDeltaMovement` is for "instant" click scroll + drag afterwards
+
             const releasePointerCapture = (pointerUpEvent: PointerEvent) => {
               runEachAndClear(pointerupCleanupFns);
               pointerCaptureElement.releasePointerCapture(pointerUpEvent.pointerId);
@@ -161,7 +162,7 @@ export const createScrollbarsSetupEvents = (
               nonAnimatedScroll &&
                 addEventListener(_track, 'pointermove', (pointerMoveEvent: PointerEvent) =>
                   moveHandleRelative(
-                    startOffset + (pointerMoveEvent[clientXYKey] - pointerDownOffset)
+                    dragScrollStartOffset + pointerMoveEvent[clientXYKey] - pointerDownClientOffset
                   )
                 ),
               nonAnimatedScroll &&
@@ -186,16 +187,19 @@ export const createScrollbarsSetupEvents = (
             pointerCaptureElement.setPointerCapture(pointerDownEvent.pointerId);
 
             if (instantClickScroll) {
-              moveHandleRelative(startOffset);
+              moveHandleRelative(clickScrollDeltaMovement);
             } else if (!isDragScroll) {
               const animateClickScroll = getStaticPluginModuleInstance<typeof ClickScrollPlugin>(
                 clickScrollPluginModuleName
               );
               if (animateClickScroll) {
                 const stopClickScrollAnimation = animateClickScroll(
+                  scrollRelative,
                   moveHandleRelative,
-                  startOffset,
-                  handleLength,
+                  bind(getHandleOffset),
+                  clickScrollDeltaMovement,
+                  _viewport,
+                  !!isHorizontal,
                   (stopped) => {
                     // if the scroll animation doesn't continue with a press
                     if (stopped) {
