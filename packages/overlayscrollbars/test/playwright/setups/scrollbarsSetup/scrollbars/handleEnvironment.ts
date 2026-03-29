@@ -5,8 +5,10 @@
 
   /**
    * scrollT: disable scrollTimeline
+   * nsh: native scrollbar hiding
+   * acs: animated click scroll
    */
-  ['scrollT', 'nsh'].forEach((param) => {
+  ['scrollT', 'nsh', 'acs'].forEach((param) => {
     const paramValue = Boolean(params.get(param));
 
     if (paramValue) {

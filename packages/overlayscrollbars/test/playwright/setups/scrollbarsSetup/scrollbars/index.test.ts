@@ -31,9 +31,9 @@ test.describe('scrollbarsSetup.scrollbars', () => {
 
     await timeout(500);
   };
-  const scrollToStartEnd = async (page: Page, target: string) => {
+  const scrollToStartEnd = async (page: Page, target: string, animated: boolean) => {
     const options = {
-      modifiers: ['Shift'] as ['Shift'],
+      modifiers: animated ? [] : (['Shift'] as ['Shift']),
       button: 'left' as const,
       force: true,
       strict: true,
@@ -54,7 +54,7 @@ test.describe('scrollbarsSetup.scrollbars', () => {
     const scrollAndEvalScrollbarHandleOffset = async (args: EvalScrollbarHandleOffsetArgs) => {
       await page.click(args.pointSelector, options);
 
-      await timeout(100);
+      await timeout(animated ? 500 : 100);
 
       const { diff } = await page.evaluate(({ targetSelector: t, pointSelector }) => {
         const isRTL =
@@ -98,7 +98,7 @@ test.describe('scrollbarsSetup.scrollbars', () => {
 
     await timeout(100);
   };
-  const testScrollbarClicks = async (page: Page) => {
+  const testScrollbarClicks = async (page: Page, animated: boolean) => {
     // test scrollbar click event propagation stop
     await clickScrollbar(page, 'body');
     await clickScrollbar(page, '#targetA');
@@ -107,19 +107,19 @@ test.describe('scrollbarsSetup.scrollbars', () => {
     await clickScrollbar(page, '#targetD');
 
     // test whether handle position and scrolling works correctly
-    await scrollToStartEnd(page, 'body');
-    await scrollToStartEnd(page, '#targetA');
-    await scrollToStartEnd(page, '#targetB');
-    await scrollToStartEnd(page, '#targetC');
-    await scrollToStartEnd(page, '#targetD');
+    await scrollToStartEnd(page, 'body', animated);
+    await scrollToStartEnd(page, '#targetA', animated);
+    await scrollToStartEnd(page, '#targetB', animated);
+    await scrollToStartEnd(page, '#targetC', animated);
+    await scrollToStartEnd(page, '#targetD', animated);
 
     await page.click('#flexReverse', { timeout: 1000 });
 
-    await scrollToStartEnd(page, 'body');
-    await scrollToStartEnd(page, '#targetA');
-    await scrollToStartEnd(page, '#targetB');
-    await scrollToStartEnd(page, '#targetC');
-    await scrollToStartEnd(page, '#targetD');
+    await scrollToStartEnd(page, 'body', animated);
+    await scrollToStartEnd(page, '#targetA', animated);
+    await scrollToStartEnd(page, '#targetB', animated);
+    await scrollToStartEnd(page, '#targetC', animated);
+    await scrollToStartEnd(page, '#targetD', animated);
 
     await page.click('#flexReverse', { timeout: 1000 });
 
@@ -127,14 +127,31 @@ test.describe('scrollbarsSetup.scrollbars', () => {
   };
 
   test('scrollbars', async ({ page }) => {
-    await testScrollbarClicks(page);
+    await testScrollbarClicks(page, false);
     await expectSuccess(page);
   });
 
   test('scrollbars without ScrollTimeline', async ({ page }) => {
     await page.click('#scrollT');
 
-    await testScrollbarClicks(page);
+    await testScrollbarClicks(page, false);
+
+    await expectSuccess(page);
+  });
+
+  test('scrollbars animated clickScroll', async ({ page }) => {
+    await page.click('#acs');
+
+    await testScrollbarClicks(page, true);
+
+    await expectSuccess(page);
+  });
+
+  test('scrollbars without ScrollTimeline animated clickScroll', async ({ page }) => {
+    await page.click('#acs');
+    await page.click('#scrollT');
+
+    await testScrollbarClicks(page, true);
 
     await expectSuccess(page);
   });

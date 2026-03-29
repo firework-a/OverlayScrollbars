@@ -193,12 +193,14 @@ export const createScrollbarsSetupEvents = (
                 clickScrollPluginModuleName
               );
               if (animateClickScroll) {
+                const { _overflowEdge } = structureSetupState;
                 const stopClickScrollAnimation = animateClickScroll(
                   scrollRelative,
                   moveHandleRelative,
                   bind(getHandleOffset),
                   clickScrollDeltaMovement,
-                  _viewport,
+                  _overflowEdge[xyKey],
+                  dragClickScrollOption,
                   !!isHorizontal,
                   (stopped) => {
                     // if the scroll animation doesn't continue with a press

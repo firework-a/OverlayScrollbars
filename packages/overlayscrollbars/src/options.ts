@@ -138,10 +138,26 @@ export type ScrollbarsAutoHideBehavior =
   /** The scrollbars are hidden if the pointer leaves the host element or unless the user scrolls. */
   | 'leave';
 
+export interface ScrollbarsClickScrollBehaviorOptions {
+  /** The scroll distance of the click scroll. If `0` the `clickScrolldistance` is the destination distance. Default: `one viewport unit`. */
+  clickScrolldistance: number;
+  /** The duration in milliseconds it takes to scroll the `clickScrolldistance`. Default `200`. */
+  clickScrollDuration: number;
+  /** The delay in milliseconds between click and press scroll. Default: `150`. */
+  clickPressDelay: number;
+  /** The duration it takes to travel one viewport unit during press scroll. Default: `90`. */
+  pressDistanceDuration: number;
+}
+
 /**
  * The scrollbar click scroll behavior.
  */
-export type ScrollbarsClickScrollBehavior = boolean | 'instant';
+export type ScrollbarsClickScrollBehavior =
+  | boolean
+  | 'instant'
+  | ((
+      isHorizontal: boolean
+    ) => Partial<ScrollbarsClickScrollBehaviorOptions> | false | null | undefined | void);
 
 /**
  * If a tuple is provided you can customize the `timeout` and the `maxWait` in milliseconds. The third value `leading` indicates whether the debounce is also executed on the leading edge.

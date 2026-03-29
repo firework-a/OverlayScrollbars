@@ -28,7 +28,7 @@ export const OptionsValidationPlugin = /* @__PURE__ */ (() => ({
       const scrollbarsAutoHideAllowedValues: OptionsTemplateValue<ScrollbarsAutoHideBehavior> =
         'never scroll leavemove';
       const scrollbarsClickScrollAllowedValues: OptionsTemplateValue<ScrollbarsClickScrollBehavior> =
-        [booleanAllowedValues, oTypes.string];
+        [booleanAllowedValues, oTypes.string, oTypes.function];
 
       const optionsTemplate: OptionsTemplate<Options> = {
         paddingAbsolute: booleanAllowedValues, // true || false

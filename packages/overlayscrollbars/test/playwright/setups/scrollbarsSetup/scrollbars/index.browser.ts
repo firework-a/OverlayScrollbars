@@ -3,7 +3,7 @@ import './index.scss';
 import './handleEnvironment';
 import { resize, setTestResult, timeout } from '@~local/browser-testing';
 import { OverlayScrollbars } from '~/overlayscrollbars';
-import { ClickScrollPlugin, ScrollbarsHidingPlugin, SizeObserverPlugin } from '~/plugins';
+import { ClickScrollPlugin, SizeObserverPlugin } from '~/plugins';
 import {
   addEventListener,
   animateNumber,
@@ -15,7 +15,7 @@ import {
 } from '~/support';
 import should from 'should';
 import type { InstancePlugin } from '~/plugins';
-import type { PartialOptions } from '~/options';
+import type { ScrollbarsClickScrollBehaviorOptions } from '~/options';
 import type { CloneableScrollbarElements } from '~/overlayscrollbars';
 
 if (!window.ResizeObserver) {
@@ -31,6 +31,7 @@ OverlayScrollbars.env().setDefaultInitialization({
   cancel: { nativeScrollbarsOverlaid: false, body: false },
 });
 const noScrollbarHiding = hasClass(document.body, 'nsh');
+const animatedClickScroll = hasClass(document.body, 'acs');
 const scrollPointsPlugin: InstancePlugin = {
   ['scrollPoints']: {
     instance(osInstance) {
@@ -64,10 +65,24 @@ OverlayScrollbars.env().setDefaultInitialization({
   cancel: { nativeScrollbarsOverlaid: false },
 });
 
-const options: PartialOptions = {
-  scrollbars: {
-    clickScroll: true,
-  },
+const createClickScrollOptions = (
+  osInstance: OverlayScrollbars,
+  isHorizontal: boolean
+): Partial<ScrollbarsClickScrollBehaviorOptions> => {
+  try {
+    should.ok(typeof isHorizontal === 'boolean', `Click Scroll isHorizontal is a boolean.`);
+  } catch (e: any) {
+    console.error(e.message, {
+      expected: e.expected,
+      actual: e.actual,
+      operator: e.operator,
+    });
+
+    throw e;
+  }
+  return {
+    clickScrolldistance: 0,
+  };
 };
 const startButton: HTMLElement | null = document.querySelector('#start');
 const directionRTLButton: HTMLElement | null = document.querySelector('#directionRTL');
@@ -104,12 +119,39 @@ const scrollInstance = (osInstance: OverlayScrollbars, percent = 0.5) => {
 resize(stageResizer!);
 
 // @ts-ignore
-const osInstanceBody = (window.osBody = OverlayScrollbars(document.body, options));
+const osInstanceBody = (window.osBody = OverlayScrollbars(document.body, {
+  scrollbars: {
+    clickScroll: animatedClickScroll
+      ? (isHorizontal) => {
+          const clickScrollOpts = createClickScrollOptions(osInstanceBody, isHorizontal);
+          return clickScrollOpts;
+        }
+      : true,
+  },
+}));
 
 // @ts-ignore
-const osInstanceA = (window.osA = OverlayScrollbars(targetA!, options));
+const osInstanceA = (window.osA = OverlayScrollbars(targetA!, {
+  scrollbars: {
+    clickScroll: animatedClickScroll
+      ? (isHorizontal) => {
+          const clickScrollOpts = createClickScrollOptions(osInstanceA, isHorizontal);
+          return clickScrollOpts;
+        }
+      : true,
+  },
+}));
 // @ts-ignore
-const osInstanceB = (window.osB = OverlayScrollbars(targetB!, options));
+const osInstanceB = (window.osB = OverlayScrollbars(targetB!, {
+  scrollbars: {
+    clickScroll: animatedClickScroll
+      ? (isHorizontal) => {
+          const clickScrollOpts = createClickScrollOptions(osInstanceB, isHorizontal);
+          return clickScrollOpts;
+        }
+      : true,
+  },
+}));
 // @ts-ignore
 const osInstanceC = (window.osC = OverlayScrollbars(
   {
@@ -118,7 +160,16 @@ const osInstanceC = (window.osC = OverlayScrollbars(
       viewport: targetC!,
     },
   },
-  options
+  {
+    scrollbars: {
+      clickScroll: animatedClickScroll
+        ? (isHorizontal) => {
+            const clickScrollOpts = createClickScrollOptions(osInstanceC, isHorizontal);
+            return clickScrollOpts;
+          }
+        : true,
+    },
+  }
 ));
 // @ts-ignore
 const osInstanceD = (window.osD = OverlayScrollbars(
@@ -128,7 +179,16 @@ const osInstanceD = (window.osD = OverlayScrollbars(
       viewport: targetD!,
     },
   },
-  options
+  {
+    scrollbars: {
+      clickScroll: animatedClickScroll
+        ? (isHorizontal) => {
+            const clickScrollOpts = createClickScrollOptions(osInstanceD, isHorizontal);
+            return clickScrollOpts;
+          }
+        : true,
+    },
+  }
 ));
 
 const scrollInstances = async () => {
