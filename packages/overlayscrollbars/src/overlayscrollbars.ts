@@ -303,12 +303,12 @@ export interface OverlayScrollbars {
    * The update event is only triggered if something changed because of this update.
    */
   update(force?: boolean): boolean;
+  /** Puts the instance to sleep or wakes it up. */
+  sleep(sleeping: boolean): void;
   /** Returns the state of the instance. */
   state(): State;
   /** Returns the elements of the instance. */
   elements(): Elements;
-  /** Puts the instance to sleep or wakes it up. */
-  sleep(sleeping: boolean): void;
   /** Destroys the instance and removes all added elements. */
   destroy(): void;
   /** Returns the instance of the passed plugin or `undefined` if no instance was found. */

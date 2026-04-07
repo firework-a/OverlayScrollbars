@@ -601,11 +601,13 @@ Indicates whether you can drag the scrollbar handles for scrolling.
 
 | type  | default |
 | :--- | :--- |
-| `boolean \| 'instant'` | `false` |
+| `boolean \| 'instant' \| ((isHorizontal) => Partial<ScrollbarsClickScrollBehaviorOptions>)` | `false` |
 
-> __Note__: If set to `true` the **ClickScrollPlugin** is required.
+> __Note__: The **ClickScrollPlugin** is required if this option is not `false` or `'instant'`.
 
 Indicates whether you can click on the scrollbar track for scrolling.
+
+Can also be a function which customizes the click scroll behavior.
 
 ### `scrollbars.pointers`
 
@@ -744,7 +746,23 @@ type ScrollbarsAutoHideBehavior =
   | 'leave';
 
 // The scrollbar click scroll behavior.
-type ScrollbarsClickScrollBehavior = boolean | 'instant';
+type ScrollbarsClickScrollBehavior =
+  | boolean
+  | 'instant'
+  | ((
+      isHorizontal: boolean
+    ) => Partial<ScrollbarsClickScrollBehaviorOptions> | false | null | undefined | void);
+
+interface ScrollbarsClickScrollBehaviorOptions {
+  // The scroll distance of the click scroll. If `0` the `clickScrolldistance` is the destination distance. Default: `one viewport unit`.
+  clickScrolldistance: number;
+  // The duration in milliseconds it takes to scroll the `clickScrolldistance`. Default `200`.
+  clickScrollDuration: number;
+  // The delay in milliseconds between click and press scroll. Default: `150`.
+  clickPressDelay: number;
+  // The duration it takes to travel one viewport unit during press scroll. Default: `90`.
+  pressDistanceDuration: number;
+}
 ```
 
 </details>
@@ -958,6 +976,16 @@ const osInstance = OverlayScrollbars(document.body, {});
   | :--- | :--- |
   | `Function` | A boolean which indicates whether the `update` event was triggered through this update. |
 
+  ### `sleep(sleeping: boolean): void`
+
+  Puts the instance to sleep or wakes it up.
+
+  When the instance is sleeping updates and (almost) all event listeners are ignored.
+
+  | parameter | type | description |
+  | :--- | :--- | :--- |
+  | sleeping | `boolean` |  Whether the instance should be put to sleep. |
+
   ### `state(): State`
 
   Gets the instance's state.
@@ -1010,6 +1038,9 @@ const osInstance = OverlayScrollbars(document.body, {});
 
     // Updates the instance.
     update(force?: boolean): boolean;
+
+    // Puts the instance to sleep or wakes it up.
+    sleep(sleeping: boolean): void;
 
     // Gets the instance's state.
     state(): State;
