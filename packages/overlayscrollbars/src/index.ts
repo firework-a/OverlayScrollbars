@@ -12,11 +12,14 @@ export { ScrollbarsHidingPlugin, SizeObserverPlugin, ClickScrollPlugin } from '.
 
 export type {
   Options,
+  OptionsDebounceValue,
   PartialOptions,
   ReadonlyOptions,
   OverflowBehavior,
   ScrollbarsVisibilityBehavior,
   ScrollbarsAutoHideBehavior,
+  ScrollbarsClickScrollBehavior,
+  ScrollbarsClickScrollBehaviorOptions,
 } from './options';
 export type {
   EventListener,
