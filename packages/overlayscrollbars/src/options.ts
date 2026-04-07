@@ -145,7 +145,7 @@ export interface ScrollbarsClickScrollBehaviorOptions {
   clickScrollDuration: number;
   /** The delay in milliseconds between click and press scroll. Default: `150`. */
   clickPressDelay: number;
-  /** The duration it takes to travel one viewport unit during press scroll. Default: `90`. */
+  /** The duration in milliseconds it takes to travel one viewport unit during press scroll. Default: `90`. */
   pressDistanceDuration: number;
 }
 
