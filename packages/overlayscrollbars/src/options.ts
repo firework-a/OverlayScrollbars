@@ -139,9 +139,9 @@ export type ScrollbarsAutoHideBehavior =
   | 'leave';
 
 export interface ScrollbarsClickScrollBehaviorOptions {
-  /** The scroll distance of the click scroll. If `0` the `clickScrolldistance` is the destination distance. Default: `one viewport unit`. */
-  clickScrolldistance: number;
-  /** The duration in milliseconds it takes to scroll the `clickScrolldistance`. Default `200`. */
+  /** The scroll distance of the click scroll. If `0` the `clickScrollDistance` is the destination distance. Default: `one viewport unit`. */
+  clickScrollDistance: number;
+  /** The duration in milliseconds it takes to scroll the `clickScrollDistance`. Default `200`. */
   clickScrollDuration: number;
   /** The delay in milliseconds between click and press scroll. Default: `150`. */
   clickPressDelay: number;

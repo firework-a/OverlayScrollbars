@@ -37,7 +37,7 @@ export const ClickScrollPlugin = /* @__PURE__ */ (() => ({
         let stopped = false;
         let stopPressAnimation = noop;
         const defaultClickScrollOptions: ScrollbarsClickScrollBehaviorOptions = {
-          clickScrolldistance: viewportSize,
+          clickScrollDistance: viewportSize,
           clickScrollDuration: 200,
           clickPressDelay: 150,
           pressDistanceDuration: 90,
@@ -45,7 +45,7 @@ export const ClickScrollPlugin = /* @__PURE__ */ (() => ({
         const easeOutQuad = (x: number) => 1 - (1 - x) * (1 - x);
         const easeInOutQuad = (x: number) =>
           x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
-        const { clickScrolldistance, clickScrollDuration, clickPressDelay, pressDistanceDuration } =
+        const { clickScrollDistance, clickScrollDuration, clickPressDelay, pressDistanceDuration } =
           assignDeep(
             {},
             defaultClickScrollOptions,
@@ -53,11 +53,11 @@ export const ClickScrollPlugin = /* @__PURE__ */ (() => ({
               ? clickScrollOption(isHorizontal)
               : defaultClickScrollOptions
           );
-        const clickScrollDistanceIsTargetDeltaMovement = clickScrolldistance === 0;
+        const clickScrollDistanceIsTargetDeltaMovement = clickScrollDistance === 0;
         const pressInOutMs = pressDistanceDuration * 2.3;
         const pressOutMs = pressDistanceDuration * 2.5;
-        const viewportSizeScalingFactor = clickScrolldistance
-          ? viewportSize / clickScrolldistance
+        const viewportSizeScalingFactor = clickScrollDistance
+          ? viewportSize / clickScrollDistance
           : 0;
         const [setPressAnimationTimeout, clearPressAnimationTimeout] = selfClearTimeout(
           // use a at least a very small delay here so `afterClickHandleOffset` is not the same as `beforeClickHandleOffset` because scroll didn't happen yet
@@ -70,7 +70,7 @@ export const ClickScrollPlugin = /* @__PURE__ */ (() => ({
           0,
           clickScrollDistanceIsTargetDeltaMovement
             ? targetDeltaMovement
-            : clickScrolldistance * targetDeltaMovementSign,
+            : clickScrollDistance * targetDeltaMovementSign,
           clickScrollDuration,
           (clickAnimationProgress, _, clickAnimationCompleted) => {
             if (clickScrollDistanceIsTargetDeltaMovement) {

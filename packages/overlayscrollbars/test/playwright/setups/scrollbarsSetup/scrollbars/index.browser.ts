@@ -81,7 +81,7 @@ const createClickScrollOptions = (
     throw e;
   }
   return {
-    clickScrolldistance: 0,
+    clickScrollDistance: 0,
   };
 };
 const startButton: HTMLElement | null = document.querySelector('#start');

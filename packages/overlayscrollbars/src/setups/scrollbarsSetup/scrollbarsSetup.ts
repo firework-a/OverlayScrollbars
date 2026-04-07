@@ -112,18 +112,22 @@ export const createScrollbarsSetup = (
   } = elements;
   const manageScrollbarsAutoHide = (removeAutoHide: boolean, delayless?: boolean) => {
     clearAutoHideTimeout();
+
+    const hide = (add?: boolean) => {
+      if (setupsInstanceState._sleeping) {
+        return;
+      }
+      _scrollbarsAddRemoveClass(classNameScrollbarAutoHideHidden, add);
+    };
+
     if (removeAutoHide) {
-      _scrollbarsAddRemoveClass(classNameScrollbarAutoHideHidden);
+      hide();
     } else {
-      const hide = bind(
-        _scrollbarsAddRemoveClass,
-        classNameScrollbarAutoHideHidden,
-        autoHideIsLeave ? !mouseInHost : true
-      );
+      const add = autoHideIsLeave ? !mouseInHost : true;
       if (instanceAutoHideDelay > 0 && !delayless) {
-        auotHideTimeout(hide);
+        auotHideTimeout(bind(hide, add));
       } else {
-        hide();
+        hide(add);
       }
     }
   };

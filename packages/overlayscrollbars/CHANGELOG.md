@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.1
+
+### Improvements
+
+- The `instance.sleep` function will now also put the `scrollbars.autoHide` timer to sleep.
+
 ## 2.15.0
 
 ### Features
