@@ -119,15 +119,15 @@ export const createOverflowUpdateSegment: CreateStructureUpdateSegment = (
     getStyles(_viewport, flowDirectionStyleArr);
   const getMeasuredScrollCoordinates = (
     flowDirectionStyles: Record<string, unknown>,
-    flowDirectionStylesIsForeign: boolean
+    flowDirectionStylesComingFromOptions: boolean
   ) => {
     const skipFlowDirectionCheck = !keys(flowDirectionStyles).length;
-    const flowDirectionStylesIndicateNonDefaultFlowDirection =
-      !flowDirectionStylesIsForeign &&
-      flowDirectionStyleArr.some((styleName) => {
-        const styleValue = flowDirectionStyles[styleName];
-        return isString(styleValue) && flowDirectionCanBeNonDefaultMap[styleName](styleValue);
-      });
+    const flowDirectionStylesIndicateNonDefaultFlowDirection = flowDirectionStylesComingFromOptions
+      ? true
+      : flowDirectionStyleArr.some((styleName) => {
+          const styleValue = flowDirectionStyles[styleName];
+          return isString(styleValue) && flowDirectionCanBeNonDefaultMap[styleName](styleValue);
+        });
 
     // if the direction is default or the element has no dimensions return default scroll coordinates (only the sign of the numbers matters)
     if (
@@ -436,7 +436,7 @@ export const createOverflowUpdateSegment: CreateStructureUpdateSegment = (
     const [overflowAmount, overflowAmountChanged] = overflowAmuntCache;
     const [viewportScrollSize, viewportScrollSizeChanged] = viewportScrollSizeCache;
     const [sizeFraction, sizeFractionChanged] = sizeFractionCache;
-    const [hasOverflow, hasOverflowChanged] = updateHasOverflowCache({
+    const [hasOverflow /*, hasOverflowChanged */] = updateHasOverflowCache({
       x: overflowAmount.w > 0,
       y: overflowAmount.h > 0,
     });
@@ -464,7 +464,13 @@ export const createOverflowUpdateSegment: CreateStructureUpdateSegment = (
       _force
     );
     const adjustMeasuredScrollCoordinates =
-      _directionChanged || _appear || flowDirectionStylesChanged || hasOverflowChanged || _force;
+      _directionChanged ||
+      _appear ||
+      flowDirectionStylesChanged ||
+      // Lets try to omit hasOverflowChanged here in favor of performance and:
+      // https://github.com/KingSora/OverlayScrollbars/issues/756
+      // hasOverflowChanged ||
+      _force;
     const [scrollCoordinates, scrollCoordinatesChanged] = adjustMeasuredScrollCoordinates
       ? updateMeasuredScrollCoordinates(
           getMeasuredScrollCoordinates(flowDirectionStyles, !!flowDirectionStylesOption),
