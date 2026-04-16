@@ -350,7 +350,7 @@ export const createObserversSetup = (
       const contentMutationObserverChanged = elementEventsChanged || attributesChanged;
       const takeRecords = _takeRecords || _force;
       const ignoreMutationFromOptions = (mutation: MutationRecord) =>
-        isFunction(ignoreMutation) && ignoreMutation(mutation);
+        isFunction(ignoreMutation) && !!ignoreMutation(mutation);
 
       if (contentMutationObserverChanged) {
         if (updateContentMutationObserver) {
@@ -377,7 +377,7 @@ export const createObserversSetup = (
               return (
                 ignore ||
                 !!closest(mutationTarget, `.${classNameScrollbar}`) || // ignore explicitely all scrollbar elements
-                !!ignoreMutationFromOptions(mutation)
+                ignoreMutationFromOptions(mutation)
               );
             },
           }

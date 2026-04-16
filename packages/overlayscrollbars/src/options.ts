@@ -221,7 +221,7 @@ export type Options = {
      * @param mutation The MutationRecord from the MutationObserver.
      * @returns A Truthy value if the mutation shall be ignored, a falsy value otherwise.
      */
-    ignoreMutation: ((mutation: MutationRecord) => boolean) | null;
+    ignoreMutation: ((mutation: MutationRecord) => boolean | null | undefined | void) | null;
     /**
      * A function which returns a map of styles which influence the viewports flow direction or `null` if the default behavior shall be used.
      * The default behavior reads the computed `display`, `flexDirection`, `direction` and `writingMode` styles of the viewport element.
@@ -237,7 +237,9 @@ export type Options = {
      * @param viewport The viewport element.
      * @returns A map of styles which influence the viewports flow direction.
      */
-    flowDirectionStyles: ((viewport: HTMLElement) => Record<string, unknown>) | null;
+    flowDirectionStyles:
+      | ((viewport: HTMLElement) => Record<string, unknown> | false | null | undefined | void)
+      | null;
   };
   /** Customizes the overflow behavior per axis. */
   overflow: {
