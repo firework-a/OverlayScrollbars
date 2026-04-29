@@ -7,11 +7,7 @@ playwrightRollup();
 test.describe.configure({ mode: 'serial' });
 
 test.describe('StructureSetup.body', () => {
-  test('with native scrollbar styling', async ({ page }) => {
-    await expectSuccess(page);
-  });
-
-  test('without native scrollbar styling', async ({ page }) => {
+  test('enter & exit animations run without flowDirection detection', async ({ page }) => {
     await expectSuccess(page);
   });
 });

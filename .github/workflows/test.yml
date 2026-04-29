@@ -31,12 +31,12 @@ jobs:
       - name: Run e2e Tests
         run: xvfb-run npm run ci:e2e  
       - name: Upload Unit Tests Coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           flags: unit
           files: "packages/**/.coverage/unit/coverage*.json"
       - name: Upload e2e Tests Coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           flags: e2e
           files: "packages/**/.coverage/e2e/coverage*.json"
