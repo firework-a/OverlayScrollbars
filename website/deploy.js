@@ -67,7 +67,7 @@ const examplesMap = {
   },
   angular: {
     cwd: 'examples/angular',
-    folder: 'dist',
+    folder: 'dist/angular/browser',
   },
   solid: {
     cwd: 'examples/solid',

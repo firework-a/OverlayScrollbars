@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.10
+
+### Improvements
+
+- The `OverlayScrollbarsComponentProps` are no longer inlined, using the `overlayscrollbars` package directly.
+
 ## 0.5.9
 
 ### Improvements

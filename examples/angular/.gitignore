@@ -1,7 +1,6 @@
-# See http://help.github.com/ignore-files/ for more about ignoring files.
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
-/build
 /dist
 /tmp
 /out-tsc
@@ -27,10 +26,10 @@ yarn-error.log
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/mcp.json
 .history/*
 
 # Miscellaneous
-/.angular
 /.angular/cache
 .sass-cache/
 /connect.lock
@@ -38,6 +37,7 @@ yarn-error.log
 /libpeerconnection.log
 testem.log
 /typings
+__screenshots__/
 
 # System files
 .DS_Store

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.2
+
+### Bug Fixes
+
+- Make sure the expensive "non default flow direction" check is not running when it shouldn't. [#756](https://github.com/KingSora/OverlayScrollbars/issues/756)
+
 ## 2.15.1
 
 ### Improvements

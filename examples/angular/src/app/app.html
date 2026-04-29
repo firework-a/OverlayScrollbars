@@ -1,0 +1,80 @@
+<main>
+  <h1>
+    <a href="https://www.npmjs.com/package/overlayscrollbars-ngx" target="_blank">
+      OverlayScrollbars Ngx
+    </a>
+  </h1>
+  <section>
+    <div
+      overlay-scrollbars
+      #osRef
+      *ngIf="useOverlayScrollbars"
+      class="overlayscrollbars-ngx"
+      [ngStyle]="{ display: elementHidden ? 'none' : undefined }"
+      [options]="options"
+      [events]="events"
+      [defer]="true"
+    >
+      <div *ngIf="!contentHidden" class="logo">
+        <img alt="Angular logo" src="/logo.svg" />
+      </div>
+    </div>
+    <div *ngIf="!useOverlayScrollbars" class="overlayscrollbars-ngx">
+      <div class="logo">
+        <img alt="Angular logo" src="/logo.svg" />
+      </div>
+    </div>
+  </section>
+  <section>
+    <p class="title">Actions:</p>
+    <div class="items">
+      <ng-template [ngIf]="useOverlayScrollbars">
+        <button (click)="scrollContent()">Scroll</button>
+        <button (click)="toggleContent()">
+          <ng-template [ngIf]="contentHidden"> Show </ng-template>
+          <ng-template [ngIf]="!contentHidden"> Hide </ng-template>
+          Content
+        </button>
+        <button (click)="toggleElement()">
+          <ng-template [ngIf]="elementHidden"> Show </ng-template>
+          <ng-template [ngIf]="!elementHidden"> Hide </ng-template>
+          Element
+        </button>
+      </ng-template>
+      <button (click)="useOverlayScrollbars = !useOverlayScrollbars">
+        <ng-template [ngIf]="useOverlayScrollbars"> Destroy </ng-template>
+        <ng-template [ngIf]="!useOverlayScrollbars"> Initialize </ng-template>
+        OverlayScrollbars
+      </button>
+    </div>
+  </section>
+  <section>
+    <p class="title">Events:</p>
+    <div class="items">
+      <div
+        *ngFor="let observedEvent of observedEvents$ | async | keyvalue: originalOrder"
+        [ngClass]="{ event: true, active: observedEvent.value.active }"
+      >
+        {{ observedEvent.key }}
+        ({{ observedEvent.value.count }})
+      </div>
+    </div>
+  </section>
+</main>
+<footer>
+  <section *ngIf="useBodyOverlayScrollbars !== null">
+    <div class="items">
+      <button (click)="toggleBodyOverlayScrollbars()">
+        <ng-template [ngIf]="useBodyOverlayScrollbars"> Destroy </ng-template>
+        <ng-template [ngIf]="!useBodyOverlayScrollbars"> Initialize </ng-template>
+        Body OverlayScrollbars
+      </button>
+    </div>
+  </section>
+  <a
+    href="https://github.com/KingSora/OverlayScrollbars/tree/master/examples/angular"
+    target="_blank"
+  >
+    Open source code of this example.
+  </a>
+</footer>
