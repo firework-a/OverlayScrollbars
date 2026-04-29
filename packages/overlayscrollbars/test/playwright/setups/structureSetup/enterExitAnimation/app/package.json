@@ -1,0 +1,17 @@
+{
+  "name": "enter-exit-animation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite build -w",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "vue": "latest"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.5",
+    "vite": "^8.0.7"
+  }
+}

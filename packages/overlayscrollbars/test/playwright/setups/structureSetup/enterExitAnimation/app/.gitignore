@@ -1,0 +1,7 @@
+# Tests generated output
+.build/
+package-lock.json
+
+# Node
+/node_modules
+

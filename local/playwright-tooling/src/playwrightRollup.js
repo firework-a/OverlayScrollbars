@@ -1,10 +1,53 @@
-import { dirname } from 'node:path';
+import { existsSync } from 'node:fs';
+import { exec, execSync } from 'child_process';
+import { dirname, join } from 'node:path';
 import { watch as rollupWatch } from 'rollup';
 import { test } from '@playwright/test';
 import { rollupPlaywrightConfig } from './rollup/rollupPlaywrightConfig.js';
 import collectCoverage from './collectCoverage.js';
 
+const getTestAppDir = (testDir) => {
+  const appDir = join(testDir, 'app');
+  const appExists = existsSync(appDir);
+
+  if (!appExists) {
+    return null;
+  }
+
+  return appDir;
+};
+
+const buildAppIfPresent = async (testDir, dev) => {
+  const appDir = getTestAppDir(testDir);
+
+  if (!appDir) {
+    return;
+  }
+
+  console.log(`Building App: ${appDir}...`);
+  const execOptions = {
+    cwd: appDir,
+  };
+  execSync(`npm i`, execOptions);
+  execSync(`npm run build`, execOptions);
+
+  if (dev) {
+    (async () => {
+      return new Promise((resolve, reject) => {
+        exec(`npm run dev`, execOptions, (error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+        });
+      });
+    })();
+  }
+};
+
 const createRollupBundle = async (testDir, useEsbuild, dev) => {
+  await buildAppIfPresent(testDir, dev);
+
   const [config, getServer] = rollupPlaywrightConfig(testDir, useEsbuild, dev);
   const watcher = rollupWatch(config);
 
@@ -61,11 +104,14 @@ export default (options) => {
 
   // eslint-disable-next-line no-empty-pattern
   test.beforeAll(async ({}, { file, config, timeout }) => {
-    if (isDev(config, timeout)) {
+    const testDir = dirname(file);
+    const dev = isDev(config, timeout);
+
+    if (dev) {
       test.setTimeout(0);
     }
 
-    ({ close, url } = await createRollupBundle(dirname(file), useEsbuild, isDev(config, timeout)));
+    ({ close, url } = await createRollupBundle(testDir, useEsbuild, dev));
   });
 
   test.beforeEach(async ({ page }) => {
