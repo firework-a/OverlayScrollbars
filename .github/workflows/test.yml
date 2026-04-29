@@ -10,14 +10,14 @@ permissions:
 
 jobs:
   test:
-    timeout-minutes: 40
+    timeout-minutes: 25
     name: OverlayScrollbars Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: lts/*
       - name: Install dependencies
@@ -33,11 +33,13 @@ jobs:
       - name: Upload Unit Tests Coverage
         uses: codecov/codecov-action@v6
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
           files: "packages/**/.coverage/unit/coverage*.json"
       - name: Upload e2e Tests Coverage
         uses: codecov/codecov-action@v6
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: e2e
           files: "packages/**/.coverage/e2e/coverage*.json"
 
