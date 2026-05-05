@@ -65,8 +65,10 @@ export default [
             './package.json': './package.json',
             './overlayscrollbars.css': './styles/overlayscrollbars.css',
             './styles/overlayscrollbars.css': './styles/overlayscrollbars.css',
-            // './noscript.css': './styles/noscript.css',
-            // './styles/noscript.css': './styles/noscript.css',
+            './overlayscrollbars.scriptingenabled.css':
+              './styles/overlayscrollbars.scriptingenabled.css',
+            './styles/overlayscrollbars.scriptingenabled.css':
+              './styles/overlayscrollbars.scriptingenabled.css',
           },
           sideEffects: ['*.css', '*.scss', '*.sass'],
         };
@@ -153,14 +155,12 @@ export default [
       },
     },
   }),
-  /*
   ...createRollupConfig({
-    project: 'noscript',
+    project: 'OverlayScrollbars.scriptingenabled',
     extractStyles: true,
     banner,
     rollup: {
-      input: './src/noscript.scss',
+      input: './src/index.scriptingenabled.scss',
     },
   }),
-  */
 ];

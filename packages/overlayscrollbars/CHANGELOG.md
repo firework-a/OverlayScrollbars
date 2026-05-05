@@ -1,6 +1,10 @@
 # Changelog
 
-## 2.15.2
+## 2.16.0
+
+### Features
+
+- The package now contains an additional css file `overlayscrollbars.scriptingenabled.css` which uses the `scripting: enabled` media query to enable the `data-overlayscrollbars-initialize` styles. This ensures that native scrollbars stay visible when JavaScript is not executed. For browser backwards compatibility reasons this can't be the default. [#751](https://github.com/KingSora/OverlayScrollbars/issues/751)
 
 ### Bug Fixes
 

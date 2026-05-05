@@ -4,7 +4,7 @@
 
 ### Improvements
 
-- The `OverlayScrollbarsComponentProps` are no longer inlined, using the `overlayscrollbars` package directly.
+- The `OverlayScrollbarsComponentProps` are no longer inlined by vue, instead the `overlayscrollbars` types are used directly.
 
 ## 0.5.9
 

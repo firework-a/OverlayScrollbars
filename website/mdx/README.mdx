@@ -116,6 +116,7 @@ To fix this behavior apply the `data-overlayscrollbars-initialize` attribute to 
   OverlayScrollbars is applied to this div
 </div>
 ```
+> __Note__: When the browser is not executing JavaScript, bridging initialization flickering will cause the native scrollbars to no be visible at all. If you want to support such a case, you can use the `overlayscrollbars.scriptingenabled.css` file instead. Please be aware of the browser support of the [`scripting CSS media feature`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/scripting).
 
 ### Initialization with an Object
 <details>
